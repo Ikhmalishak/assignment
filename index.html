@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Login</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+            // Decode the ID token and display the user's info (optional)
+        }
+
+        window.onload = function () {
+            google.accounts.id.initialize({
+                client_id: "YOUR_GOOGLE_CLIENT_ID",
+                callback: handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("buttonDiv"),
+                { theme: "outline", size: "large" } // Customization options
+            );
+            google.accounts.id.prompt(); // Display the One Tap prompt
+        };
+    </script>
+</head>
+<body>
+    <h1>Sign In with Google</h1>
+    <div id="buttonDiv"></div>
+</body>
+</html>
