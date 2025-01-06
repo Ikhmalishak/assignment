@@ -82,4 +82,109 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/Tween.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/examples/js/controls/TrackballControls.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/lib
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/examples/js/renderers/CSS3DRenderer.js"></script>
+
+<script>
+    async function fetchData() {
+        try {
+            const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQiFsAXJNe7ETQWyyhmX1uvKJeTmjTodekGzZjMIHcSdDqeTyG5yaLHrGmWisC3uiIpwxpBnuS9C0xX/pub?output=csv');
+            if (!response.ok) throw new Error('Failed to fetch data');
+            const data = await response.text();
+            return data.split('\n').map(row => row.split(','));
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            return [];
+        }
+    }
+
+    async function init() {
+        const table = await fetchData();
+        console.log('Fetched table data:', table);
+        if (!table.length) return;
+
+        const objects = [];
+        const targets = { table: [] };
+
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.z = 3000;
+
+        const scene = new THREE.Scene();
+
+        const renderer = new THREE.CSS3DRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        const controls = new THREE.TrackballControls(camera, renderer.domElement);
+        controls.minDistance = 500;
+        controls.maxDistance = 6000;
+
+        table.forEach((row, i) => {
+            const [symbol, name, weight, col, rowNum] = row;
+            if (!symbol || !name || isNaN(weight) || isNaN(col) || isNaN(rowNum)) return;
+
+            const element = document.createElement('div');
+            element.className = 'element';
+            element.style.backgroundColor = `rgba(0,127,127,${Math.random() * 0.5 + 0.25})`;
+
+            const number = document.createElement('div');
+            number.className = 'number';
+            number.textContent = i + 1;
+            element.appendChild(number);
+
+            const symbolDiv = document.createElement('div');
+            symbolDiv.className = 'symbol';
+            symbolDiv.textContent = symbol;
+            element.appendChild(symbolDiv);
+
+            const details = document.createElement('div');
+            details.className = 'details';
+            details.innerHTML = `${name}<br>${weight}`;
+            element.appendChild(details);
+
+            const objectCSS = new THREE.CSS3DObject(element);
+            objectCSS.position.set(Math.random() * 4000 - 2000, Math.random() * 4000 - 2000, Math.random() * 4000 - 2000);
+            scene.add(objectCSS);
+            objects.push(objectCSS);
+
+            const object = new THREE.Object3D();
+            object.position.set((col * 140) - 1330, -(rowNum * 180) + 990, 0);
+            targets.table.push(object);
+        });
+
+        document.getElementById('table').addEventListener('click', () => transform(targets.table, 2000));
+
+        function transform(targets, duration) {
+            TWEEN.removeAll();
+            objects.forEach((object, i) => {
+                const target = targets[i];
+                new TWEEN.Tween(object.position)
+                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
+            });
+            new TWEEN.Tween({})
+                .to({}, duration * 2)
+                .onUpdate(() => renderer.render(scene, camera))
+                .start();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            TWEEN.update();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+        renderer.render(scene, camera);
+    }
+
+    init();
+</script>
+</body>
+</html>
