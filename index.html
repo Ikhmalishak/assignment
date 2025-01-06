@@ -52,7 +52,9 @@
     <script>
         function handleCredentialResponse(response) {
             console.log("Encoded JWT ID token: " + response.credential);
-            // Decode the ID token and display the user's info (optional)
+
+            // Redirect to the specified URL after successful login
+            window.location.href = 'https://ikhmalishak.github.io/assignment/examples/'; // Redirect to your desired URL
         }
 
         window.onload = function () {
